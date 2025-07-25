@@ -45,6 +45,8 @@ public class Book extends BaseEntity{
     // Vị trí của sách trong thư viện (ví dụ: kệ, phòng)
     private String location;
 
+    private int borrowCount;
+
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private EBookStatus status; // e.g., "available", "checked out", "reserved"
@@ -56,7 +58,7 @@ public class Book extends BaseEntity{
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<BookLoan> bookLoans;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "book_category",
         joinColumns = @JoinColumn(name = "book_id"),

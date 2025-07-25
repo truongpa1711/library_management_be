@@ -6,6 +6,7 @@ import com.example.library_management_be.entity.Category;
 import com.example.library_management_be.dto.response.BookResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
 import java.util.List;
@@ -30,4 +31,10 @@ public interface BookMapper {
     @Mapping(target = "categories", ignore = true)
     @Mapping(target = "status", ignore = true)
     Book toEntity(BookRequest bookRequest);
+
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "categories", ignore = true)
+    void updateEntityFromRequest(
+            BookRequest bookRequest, @MappingTarget Book book
+    );
 }

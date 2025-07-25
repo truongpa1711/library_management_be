@@ -10,4 +10,10 @@ public class CategoryException extends RuntimeException {
             super(message);
         }
     }
+
+    public static class CategoryAlreadyExistsException extends RuntimeException {
+        public CategoryAlreadyExistsException(String message) {
+            super(message);
+        }
+    }
 }

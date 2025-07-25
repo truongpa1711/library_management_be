@@ -1,6 +1,6 @@
 package com.example.library_management_be.controller;
 
-import com.example.library_management_be.dto.BaseRespone;
+import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.CategoryRequest;
 import com.example.library_management_be.dto.response.CategoryResponse;
 import com.example.library_management_be.service.CategoryService;
@@ -22,13 +22,13 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseRespone<CategoryResponse>> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
+    public ResponseEntity<BaseResponse<CategoryResponse>> createCategory(@Valid @RequestBody CategoryRequest categoryRequest) {
         return ResponseEntity.ok(categoryService.createCategory(categoryRequest));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseRespone<CategoryResponse>> updateCategory(
+    public ResponseEntity<BaseResponse<CategoryResponse>> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest categoryRequest) {
         return ResponseEntity.ok(categoryService.updateCategory(id, categoryRequest));
@@ -36,19 +36,19 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BaseRespone<String>> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<BaseResponse<String>> deleteCategory(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.deleteCategory(id));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<BaseRespone<CategoryResponse>> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<BaseResponse<CategoryResponse>> getCategoryById(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
     @GetMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<BaseRespone<List<CategoryResponse>>> getAllCategories() {
+    public ResponseEntity<BaseResponse<List<CategoryResponse>>> getAllCategories() {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 }

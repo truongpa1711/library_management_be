@@ -22,6 +22,7 @@ public class BookResponse {
     private String genre;
     private int availableQuantity;
     private int totalQuantity;
+    private int borrowCount;
     private String location;
     private EBookStatus status;
     private Double averageRating;

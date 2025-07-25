@@ -1,6 +1,6 @@
 package com.example.library_management_be.service;
 
-import com.example.library_management_be.dto.BaseRespone;
+import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.CategoryRequest;
 import com.example.library_management_be.dto.response.CategoryResponse;
 import com.example.library_management_be.entity.Category;
@@ -22,12 +22,9 @@ public class CategoryService {
         this.categoryMapper = categoryMapper;
     }
 
-    public BaseRespone<CategoryResponse> createCategory(CategoryRequest categoryRequest) {
+    public BaseResponse<CategoryResponse> createCategory(CategoryRequest categoryRequest) {
         if (categoryRepository.findByName(categoryRequest.getName()) != null) {
-            return BaseRespone.<CategoryResponse>builder()
-                    .status("error")
-                    .message("Category already exists")
-                    .build();
+            throw new CategoryException.CategoryAlreadyExistsException("Category with name '" + categoryRequest.getName() + "' already exists");
         }
         Category category = new Category();
         category.setName(categoryRequest.getName());
@@ -38,14 +35,14 @@ public class CategoryService {
         CategoryResponse categoryResponse
                 = categoryMapper.toDto(category);
 
-        return BaseRespone.<CategoryResponse>builder()
+        return BaseResponse.<CategoryResponse>builder()
                 .status("success")
                 .message("Category created successfully")
                 .data(categoryResponse)
                 .build();
 
     }
-    public BaseRespone<CategoryResponse> updateCategory(Long id, CategoryRequest categoryRequest) {
+    public BaseResponse<CategoryResponse> updateCategory(Long id, CategoryRequest categoryRequest) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryException.CategoryNotFoundException("Category not found"));
 
@@ -61,41 +58,41 @@ public class CategoryService {
         Category updatedCategory = categoryRepository.save(category);
         CategoryResponse categoryResponse = categoryMapper.toDto(updatedCategory);
 
-        return BaseRespone.<CategoryResponse>builder()
+        return BaseResponse.<CategoryResponse>builder()
                 .status("success")
                 .message("Category updated successfully")
                 .data(categoryResponse)
                 .build();
     }
-    public BaseRespone<String> deleteCategory(Long id) {
+    public BaseResponse<String> deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryException.CategoryNotFoundException("Category not found"));
 
         categoryRepository.delete(category);
-        return BaseRespone.<String>builder()
+        return BaseResponse.<String>builder()
                 .status("success")
                 .message("Category deleted successfully")
                 .data("Category with ID " + id + " has been deleted")
                 .build();
     }
-    public BaseRespone<CategoryResponse> getCategoryById(Long id) {
+    public BaseResponse<CategoryResponse> getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryException.CategoryNotFoundException("Category not found"));
 
         CategoryResponse categoryResponse = categoryMapper.toDto(category);
-        return BaseRespone.<CategoryResponse>builder()
+        return BaseResponse.<CategoryResponse>builder()
                 .status("success")
                 .message("Category retrieved successfully")
                 .data(categoryResponse)
                 .build();
     }
-    public BaseRespone<List<CategoryResponse>> getAllCategories() {
+    public BaseResponse<List<CategoryResponse>> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         List<CategoryResponse> categoryResponses = categories.stream()
                 .map(categoryMapper::toDto)
                 .collect(Collectors.toList());
 
-        return BaseRespone.<List<CategoryResponse>>builder()
+        return BaseResponse.<List<CategoryResponse>>builder()
                 .status("success")
                 .message("All categories retrieved successfully")
                 .data(categoryResponses)

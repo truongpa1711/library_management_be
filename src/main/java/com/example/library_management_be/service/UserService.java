@@ -1,6 +1,6 @@
 package com.example.library_management_be.service;
 
-import com.example.library_management_be.dto.BaseRespone;
+import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.ChangePasswordRequest;
 import com.example.library_management_be.dto.request.UserUpdateRequest;
 import com.example.library_management_be.dto.response.UserResponse;
@@ -24,19 +24,19 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public BaseRespone<UserResponse> getUserInfo(Authentication authentication) {
+    public BaseResponse<UserResponse> getUserInfo(Authentication authentication) {
         String email= authentication.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         UserResponse userResponse = userMapper.toDto(user);
-        return BaseRespone.<UserResponse>builder()
+        return BaseResponse.<UserResponse>builder()
                 .status("success")
                 .message("User information retrieved successfully")
                 .data(userResponse)
                 .build();
     }
 
-    public BaseRespone<UserResponse> updateUserInfo(Authentication authentication, UserUpdateRequest userUpdateRequest) {
+    public BaseResponse<UserResponse> updateUserInfo(Authentication authentication, UserUpdateRequest userUpdateRequest) {
         String email = authentication.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -58,14 +58,14 @@ public class UserService {
         User updatedUser = userRepository.save(user);
         UserResponse userResponse = userMapper.toDto(updatedUser);
 
-        return BaseRespone.<UserResponse>builder()
+        return BaseResponse.<UserResponse>builder()
                 .status("success")
                 .message("User information updated successfully")
                 .data(userResponse)
                 .build();
     }
 
-    public BaseRespone<String> changePassword(Authentication authentication, ChangePasswordRequest changePasswordRequest) {
+    public BaseResponse<String> changePassword(Authentication authentication, ChangePasswordRequest changePasswordRequest) {
         String email = authentication.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException.UserNotFoundException("User not found"));
@@ -81,7 +81,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        return BaseRespone.<String>builder()
+        return BaseResponse.<String>builder()
                 .status("success")
                 .message("Password changed successfully")
                 .data("Password updated successfully")

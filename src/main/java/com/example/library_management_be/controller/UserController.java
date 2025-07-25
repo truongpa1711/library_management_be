@@ -1,6 +1,6 @@
 package com.example.library_management_be.controller;
 
-import com.example.library_management_be.dto.BaseRespone;
+import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.ChangePasswordRequest;
 import com.example.library_management_be.dto.request.UserUpdateRequest;
 import com.example.library_management_be.dto.response.UserResponse;
@@ -19,20 +19,20 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<BaseRespone<UserResponse>> getUserInfo(Authentication authentication) {
+    public ResponseEntity<BaseResponse<UserResponse>> getUserInfo(Authentication authentication) {
         return ResponseEntity.ok(userService.getUserInfo(authentication));
     }
 
     @PutMapping
-    public ResponseEntity<BaseRespone<UserResponse>> updateUserInfo(Authentication authentication,
-                                                                    @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
+    public ResponseEntity<BaseResponse<UserResponse>> updateUserInfo(Authentication authentication,
+                                                                     @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
         return ResponseEntity.ok(userService.updateUserInfo(authentication, userUpdateRequest));
     }
 
 
     @PutMapping("/change-password")
-    public ResponseEntity<BaseRespone<String>> changePassword(Authentication authentication,
-                                                              @RequestBody ChangePasswordRequest changePasswordRequest) {
+    public ResponseEntity<BaseResponse<String>> changePassword(Authentication authentication,
+                                                               @RequestBody ChangePasswordRequest changePasswordRequest) {
         return ResponseEntity.ok(userService.changePassword(authentication, changePasswordRequest));
     }
 
