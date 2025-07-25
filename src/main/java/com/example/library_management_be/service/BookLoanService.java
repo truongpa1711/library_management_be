@@ -303,8 +303,15 @@ public class BookLoanService {
                 .build();
     }
 
+    @Transactional
+    public void deleteBookLoan(Long id) {
+        BookLoan bookLoan = bookLoanRepository.findById(id)
+                .orElseThrow(() -> new BookException.BookNotFoundException("Không tìm thấy thông tin mượn sách"));
 
-
-
+        // Xóa các phiếu phạt liên quan
+        List<Fine> fines = fineRepository.findByBookLoan(bookLoan);
+        fineRepository.deleteAll(fines);
+        bookLoanRepository.delete(bookLoan);
+    }
 
 }

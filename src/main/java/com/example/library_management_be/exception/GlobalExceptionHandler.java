@@ -81,7 +81,8 @@ public class GlobalExceptionHandler {
             CategoryException.CategoryNotFoundException.class,
             UsernameNotFoundException.class,
             BookException.BookNotFoundException.class,
-            BookException.BookLoanNotFoundException.class
+            BookException.BookLoanNotFoundException.class,
+            BaseException.CustomNotFoundException.class
     })
     public ResponseEntity<BaseResponse<Object>> handleNotFound(RuntimeException ex) {
         String message = (ex instanceof UsernameNotFoundException) ? "Email không tồn tại" : ex.getMessage();

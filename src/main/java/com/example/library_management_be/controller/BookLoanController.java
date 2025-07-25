@@ -67,4 +67,15 @@ public class BookLoanController {
         return ResponseEntity.ok(bookLoanService.extendBookLoan(id, request));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<String>> deleteBookLoan(@PathVariable Long id) {
+        bookLoanService.deleteBookLoan(id);
+        return ResponseEntity.ok(BaseResponse.<String>builder()
+                .status("success")
+                .message("Đơn mượn sách đã được xóa thành công")
+                .data(null)
+                .build());
+    }
+
 }
