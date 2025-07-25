@@ -43,5 +43,28 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             Pageable pageable
     );
 
+    @Query("SELECT COUNT(b) FROM Book b")
+    long countTotalBooks();
+
+    @Query("SELECT SUM(b.borrowCount) FROM Book b")
+    Long countTotalBorrowed();
+
+    @Query("""
+    SELECT b.author, COUNT(b) 
+    FROM Book b 
+    GROUP BY b.author 
+    ORDER BY COUNT(b) DESC
+""")
+    List<Object[]> findTopAuthors(Pageable pageable);
+
+    @Query("""
+    SELECT b.genre, COUNT(b) 
+    FROM Book b 
+    GROUP BY b.genre 
+    ORDER BY COUNT(b) DESC
+""")
+    List<Object[]> findTopGenres(Pageable pageable);
+
+
 
 }

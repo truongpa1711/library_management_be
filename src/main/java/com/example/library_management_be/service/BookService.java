@@ -3,6 +3,8 @@ package com.example.library_management_be.service;
 import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.BookRequest;
 import com.example.library_management_be.dto.response.BookResponse;
+import com.example.library_management_be.dto.response.BookStatisticsResponse;
+import com.example.library_management_be.dto.response.SimpleCount;
 import com.example.library_management_be.entity.Book;
 import com.example.library_management_be.entity.Category;
 import com.example.library_management_be.entity.enums.EBookStatus;
@@ -210,6 +212,29 @@ public class BookService {
         return similar.stream().map(bookMapper::toDto).toList();
     }
 
+    public BookStatisticsResponse getStatistics() {
+        long totalBooks = bookRepository.countTotalBooks();
+        Long totalBorrowed = bookRepository.countTotalBorrowed();
+        if (totalBorrowed == null) totalBorrowed = 0L;
 
+        Pageable top5 = PageRequest.of(0, 5);
+
+        List<SimpleCount> topAuthors = bookRepository.findTopAuthors(top5)
+                .stream().map(o -> new SimpleCount((String)o[0], (Long)o[1])).toList();
+
+        List<SimpleCount> topGenres = bookRepository.findTopGenres(top5)
+                .stream().map(o -> new SimpleCount((String)o[0], (Long)o[1])).toList();
+
+        List<BookResponse> mostBorrowed = bookRepository.findTop10ByOrderByBorrowCountDesc()
+                .stream().map(bookMapper::toDto).toList();
+
+        return BookStatisticsResponse.builder()
+                .totalBooks(totalBooks)
+                .totalBorrowed(totalBorrowed)
+                .topAuthors(topAuthors)
+                .topGenres(topGenres)
+                .mostBorrowedBooks(mostBorrowed)
+                .build();
+    }
 
 }

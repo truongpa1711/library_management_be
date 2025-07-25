@@ -22,4 +22,10 @@ public class BookException extends RuntimeException {
         super(message);
         }
     }
+
+    public static class BookLoanNotFoundException extends RuntimeException {
+        public BookLoanNotFoundException(String message) {
+            super(message);
+        }
+    }
 }

@@ -3,7 +3,10 @@ package com.example.library_management_be.controller;
 import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.BookRequest;
 import com.example.library_management_be.dto.response.BookResponse;
+import com.example.library_management_be.dto.response.BookStatisticsResponse;
+import com.example.library_management_be.entity.Book;
 import com.example.library_management_be.service.BookService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 @RestController
@@ -112,6 +117,20 @@ public class BookController {
         );
     }
 
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<BookStatisticsResponse>> getStatistics() {
+        BookStatisticsResponse stats = bookService.getStatistics();
+        return ResponseEntity.ok(
+                BaseResponse.<BookStatisticsResponse>builder()
+                        .status("success")
+                        .message("Thống kê sách")
+                        .data(stats)
+                        .build()
+        );
+    }
 
+//    @GetMapping("/export")
+//    @PreAuthorize("hasRole('ADMIN')")
 
 }

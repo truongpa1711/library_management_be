@@ -28,8 +28,11 @@ public class BookLoan extends BaseEntity{
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "due_date", nullable = false)
+    @Column(name = "borrow_date", nullable = false)
     private LocalDate borrowDate; // Ngày mượn sách
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate; // Ngày trả sách dự kiến
 
     @Column(name = "return_date")
     private LocalDate returnDate; // Ngày trả sách, có thể null nếu chưa trả
@@ -39,9 +42,12 @@ public class BookLoan extends BaseEntity{
     private ELoanStatus status; // Trạng thái mượn sách, ví dụ: "borrowed", "returned", "overdue"
 
     @Column(name = "book_condition", nullable = false)
+    @Enumerated(EnumType.STRING)
     private EBookCondition book_condition; // Trạng thái của sách khi mượn, ví dụ: "lost", "good", "damaged"
 
     @OneToMany(mappedBy = "bookLoan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Fine> fines = new ArrayList<>();
+
+
 
 }
