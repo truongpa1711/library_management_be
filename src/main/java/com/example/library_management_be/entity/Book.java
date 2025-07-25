@@ -30,6 +30,8 @@ public class Book extends BaseEntity{
     private String publisher;
     private int publicationYear;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
     // Thể loại sách
     private String genre;
 

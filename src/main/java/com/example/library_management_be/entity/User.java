@@ -44,6 +44,12 @@ public class User extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    @Column(name = "is_verified", nullable = false)
+    private boolean is_verified = false;
+
+    @Column(name = "verified_token")
+    private String verifiedToken; // Token for email verification
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BookLoan> bookLoans;
 
