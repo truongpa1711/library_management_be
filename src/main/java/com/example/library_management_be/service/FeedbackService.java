@@ -2,6 +2,8 @@ package com.example.library_management_be.service;
 
 import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.FeedbackRequest;
+import com.example.library_management_be.dto.request.FeedbackStatusRequest;
+import com.example.library_management_be.dto.request.FeedbackUpdateRequest;
 import com.example.library_management_be.dto.response.FeedbackResponse;
 import com.example.library_management_be.entity.Book;
 import com.example.library_management_be.entity.Feedback;
@@ -15,11 +17,17 @@ import com.example.library_management_be.repository.BookLoanRepository;
 import com.example.library_management_be.repository.BookRepository;
 import com.example.library_management_be.repository.FeedbackRepository;
 import com.example.library_management_be.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class FeedbackService {
@@ -73,9 +81,139 @@ public class FeedbackService {
                 .message("Feedback created successfully")
                 .data(feedbackMapper.toDto(feedback))
                 .build();
-
-
     }
+
+    public BaseResponse<Page<FeedbackResponse>> getFeedbacksByBookId(Long bookId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
+        Page<Feedback> feedbackPage = feedbackRepository.findByBookId(bookId, pageable);
+
+        Page<FeedbackResponse> responsePage = feedbackPage.map(feedbackMapper::toDto);
+
+        return BaseResponse.<Page<FeedbackResponse>>builder()
+                .status("success")
+                .message("Feedbacks retrieved successfully")
+                .data(responsePage)
+                .build();
+    }
+
+    @Transactional
+    public BaseResponse<FeedbackResponse> replyFeedback(Long id, String replyContent) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() -> new BaseException.CustomNotFoundException("Feedback không tồn tại"));
+
+        if (feedback.getStatus() == EFeedbackStatus.REJECTED) {
+            throw new BaseException.CustomBadRequestException("Feedback đã bị từ chối");
+        }
+
+        if (feedback.getReply() != null || feedback.getStatus() == EFeedbackStatus.APPROVED) {
+            throw new BaseException.CustomBadRequestException("Feedback đã được xử lý");
+        }
+
+        feedback.setReply(
+                (replyContent == null || replyContent.trim().isEmpty())
+                        ? "Đã duyệt phản hồi"
+                        : replyContent
+        );
+        feedback.setRepliedDate(LocalDateTime.now());
+        feedback.setStatus(EFeedbackStatus.APPROVED);
+        feedback.setIsEditable(false); // Không cho phép người dùng chỉnh sửa sau khi đã trả lời
+        feedbackRepository.save(feedback);
+        FeedbackResponse response = feedbackMapper.toDto(feedback);
+
+        return BaseResponse.<FeedbackResponse>builder()
+                .status("success")
+                .message("Feedback replied successfully")
+                .data(response)
+                .build();
+    }
+
+    @Transactional
+    public BaseResponse<FeedbackResponse> updateFeedbackStatus(Long id, FeedbackStatusRequest request) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() -> new BaseException.CustomNotFoundException("Feedback không tồn tại"));
+
+        if (feedback.getStatus() != EFeedbackStatus.PENDING) {
+            throw new BaseException.CustomBadRequestException("Feedback đã được xử lý trước đó");
+        }
+
+        feedback.setStatus(request.getStatus());
+        if (request.getStatus() == EFeedbackStatus.APPROVED) {
+            feedback.setRepliedDate(LocalDateTime.now());
+        }
+        feedback.setIsEditable(false); // Không cho phép người dùng chỉnh sửa sau khi đã xử lý
+
+        feedbackRepository.save(feedback);
+        FeedbackResponse response = feedbackMapper.toDto(feedback);
+        return BaseResponse.<FeedbackResponse>builder()
+                .status("success")
+                .message("Feedback status updated successfully")
+                .data(response)
+                .build();
+    }
+
+    @Transactional
+    public BaseResponse<FeedbackResponse> updateFeedback(Long id, FeedbackUpdateRequest request, Authentication auth) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() -> new BaseException.CustomNotFoundException("Feedback không tồn tại"));
+
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UserException.UserNotFoundException("User not found"));
+        if (!feedback.getUser().getId().equals(currentUser.getId())) {
+            throw new BaseException.CustomBadRequestException("Bạn không có quyền sửa feedback này");
+        }
+
+        // Kiểm tra trạng thái isEditable
+        if (!feedback.getIsEditable()) {
+            throw new BaseException.CustomBadRequestException("Feedback này không thể chỉnh sửa nữa");
+        }
+
+        // Cập nhật nội dung feedback
+        feedback.setContent(request.getContent());
+        feedback.setRating(request.getRating());
+        Feedback updated = feedbackRepository.save(feedback);
+        FeedbackResponse response = feedbackMapper.toDto(updated);
+        return BaseResponse.<FeedbackResponse>builder()
+                .status("success")
+                .message("Feedback updated successfully")
+                .data(response)
+                .build();
+    }
+
+    public void deleteFeedback(Long id, Authentication auth) {
+        String email = auth.getName();
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() -> new BaseException.CustomNotFoundException("Feedback không tồn tại"));
+
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException.UserNotFoundException("User không tồn tại"));
+        if (!feedback.getUser().getId().equals(currentUser.getId())) {
+            throw new BaseException.CustomBadRequestException("Bạn không có quyền xóa feedback này");
+        }
+
+        if (!feedback.getIsEditable()) {
+            throw new BaseException.CustomBadRequestException("Feedback không thể xóa vì đã được duyệt hoặc từ chối");
+        }
+
+        feedbackRepository.delete(feedback);
+    }
+
+    public BaseResponse<Page<FeedbackResponse>> getAllFeedbacks(String status, String bookTitle, String userEmail, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+
+        EFeedbackStatus enumStatus = null;
+        if (status != null) {
+            try {
+                enumStatus = EFeedbackStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BaseException.CustomBadRequestException("Trạng thái không hợp lệ: " + status);
+            }
+        }
+
+        Page<Feedback> feedbacks = feedbackRepository.findByFilters(enumStatus, bookTitle, userEmail, pageable);
+        Page<FeedbackResponse> responsePage = feedbacks.map(feedbackMapper::toDto);
+        return new BaseResponse<>("success", "Danh sách feedback đã lọc", responsePage);
+    }
+
 
 
 }

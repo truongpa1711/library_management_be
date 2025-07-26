@@ -2,9 +2,12 @@ package com.example.library_management_be.controller;
 
 import com.example.library_management_be.dto.BaseResponse;
 import com.example.library_management_be.dto.request.FeedbackRequest;
+import com.example.library_management_be.dto.request.FeedbackStatusRequest;
+import com.example.library_management_be.dto.request.FeedbackUpdateRequest;
 import com.example.library_management_be.dto.response.FeedbackResponse;
 import com.example.library_management_be.service.FeedbackService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,78 +28,63 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.createFeedback(dto, auth));
     }
 
-//    @PostMapping("/admin")
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<BaseResponse<FeedbackResponse>> createFeedbackByAdmin(@RequestBody @Valid FeedbackRequest dto, Authentication auth) {
-//        return ResponseEntity.ok(feedbackService.createFeedbackByAdmin(dto, auth));
-//    }
+    // 2. Lấy tất cả feedback của một quyển sách
+    @GetMapping("/book/{bookId}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<Page<FeedbackResponse>>> getFeedbacksByBookId(@PathVariable Long bookId,
+                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                   @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(feedbackService.getFeedbacksByBookId(bookId, page, size));
+    }
 
-//    @GetMapping("/book/{bookId}")
-//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-//    public ResponseEntity<BaseResponse<FeedbackResponse>> getFeedbackByBookId(@PathVariable Long bookId, Authentication auth) {
-//        return ResponseEntity.ok(feedbackService.getFeedbackByBookId(bookId, auth));
-//    }
-    /*📌 2. Lấy tất cả feedback của một quyển sách
-h
-Sao chép
-Chỉnh sửa
-GET /api/feedbacks/book/{bookId}
-Trả về list FeedbackResponse
+    // 3. Admin trả lời feedback
+    @PutMapping("/{id}/reply")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<FeedbackResponse>> replyFeedback(
+            @PathVariable Long id,
+            @RequestParam(required = false) String replyContent) {
+        return ResponseEntity.ok(feedbackService.replyFeedback(id, replyContent));
+    }
 
-Dùng để hiển thị khi user ấn vào một quyển sách
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<FeedbackResponse>> updateFeedbackStatus(
+            @PathVariable Long id,
+            @RequestBody @Valid FeedbackStatusRequest request) {
+        System.out.println(request);
+        return ResponseEntity.ok(feedbackService.updateFeedbackStatus(id, request));
+    }
 
-Có thể thêm phân trang:
+    // 4. User cập nhật feedback của chính mình
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<BaseResponse<FeedbackResponse>> updateFeedback(
+            @PathVariable Long id,
+            @RequestBody @Valid FeedbackUpdateRequest dto,
+            Authentication auth) {
+        return ResponseEntity.ok(feedbackService.updateFeedback(id, dto, auth));
+    }
 
-http
-Sao chép
-Chỉnh sửa
-GET /api/feedbacks/book/{bookId}?page=0&size=10
-📌 3. Admin trả lời feedback
-http
-Sao chép
-Chỉnh sửa
-PATCH /api/feedbacks/{id}/reply
-Body: { "reply": "Cảm ơn bạn đã góp ý!" }
+    // 5. User xóa feedback của chính mình
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<BaseResponse<Void>> deleteFeedback(@PathVariable Long id, Authentication auth) {
+        feedbackService.deleteFeedback(id, auth);
+        return ResponseEntity.ok(new BaseResponse<>("success", "Xóa feedback thành công", null));
+    }
 
-Role: ADMIN
+    // 6. Admin xem tất cả feedback
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<Page<FeedbackResponse>>> getAllFeedbacks(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String bookTitle,
+            @RequestParam(required = false) String userEmail,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-Cập nhật reply, repliedDate, status = RESOLVED
-
-📌 4. User cập nhật feedback của chính mình
-h
-Sao chép
-Chỉnh sửa
-PUT /api/feedbacks/{id}
-Yêu cầu: giống FeedbackRequest
-
-Kiểm tra isEditable == true và user == auth.getName()
-
-Role: USER
-
-📌 5. User xóa feedback của chính mình
-http
-Sao chép
-Chỉnh sửa
-DELETE /api/feedbacks/{id}
-Role: USER
-
-Chỉ cho phép xóa nếu isEditable == true và user == auth.getName()
-
-📌 6. Admin xem tất cả feedback (quản trị)
-http
-Sao chép
-Chỉnh sửa
-GET /api/feedbacks
-Có filter: status=PENDING, bookTitle, userEmail, etc.
-
-Role: ADMIN
-
-Phân trang, sắp xếp
-
-📌 7. Thống kê (tuỳ chọn)
-http
-Sao chép
-Chỉnh sửa
-GET /api/feedbacks/statistics
-Ví dụ: top 5 sách có nhiều feedback nhất, trung bình rating, số feedback theo trạng thái...*/
+        return ResponseEntity.ok(feedbackService.getAllFeedbacks(status, bookTitle, userEmail, page, size));
+    }
 }
+
+    
