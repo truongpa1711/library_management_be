@@ -7,21 +7,29 @@ import com.example.library_management_be.dto.response.UserResponse;
 import com.example.library_management_be.entity.User;
 import com.example.library_management_be.exception.UserException;
 import com.example.library_management_be.mapper.UserMapper;
+import com.example.library_management_be.repository.BlacklistTokenRepository;
 import com.example.library_management_be.repository.UserRepository;
+import com.example.library_management_be.utils.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.library_management_be.entity.BlacklistToken;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final BlacklistTokenRepository blacklistTokenRepository;
+    private final JwtUtils jwtUtils;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, BlacklistTokenRepository blacklistTokenRepository, JwtUtils jwtUtils) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.blacklistTokenRepository = blacklistTokenRepository;
+        this.jwtUtils = jwtUtils;
     }
 
     public BaseResponse<UserResponse> getUserInfo(Authentication authentication) {
@@ -87,5 +95,33 @@ public class UserService {
                 .data("Password updated successfully")
                 .build();
     }
+
+    public BaseResponse<String> logout(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token == null || !jwtUtils.validateAccessToken(token)) {
+            return BaseResponse.<String>builder()
+                    .status("error")
+                    .message("Token không hợp lệ hoặc không tồn tại")
+                    .data(null)
+                    .build();
+        }
+        BlacklistToken blacklistToken = new BlacklistToken();
+        blacklistToken.setToken(token);
+        blacklistTokenRepository.save(blacklistToken);
+        return BaseResponse.<String>builder()
+                .status("success")
+                .message("Logout successful")
+                .data("User logged out successfully")
+                .build();
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
 
 }

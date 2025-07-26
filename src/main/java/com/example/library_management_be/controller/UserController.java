@@ -5,6 +5,7 @@ import com.example.library_management_be.dto.request.ChangePasswordRequest;
 import com.example.library_management_be.dto.request.UserUpdateRequest;
 import com.example.library_management_be.dto.response.UserResponse;
 import com.example.library_management_be.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,11 @@ public class UserController {
     public ResponseEntity<BaseResponse<String>> changePassword(Authentication authentication,
                                                                @RequestBody ChangePasswordRequest changePasswordRequest) {
         return ResponseEntity.ok(userService.changePassword(authentication, changePasswordRequest));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<String>> logout(Authentication authentication, HttpServletRequest request) {
+        return ResponseEntity.ok(userService.logout(request));
     }
 
 }

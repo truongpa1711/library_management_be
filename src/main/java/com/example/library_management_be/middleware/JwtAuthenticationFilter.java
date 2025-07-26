@@ -1,5 +1,6 @@
 package com.example.library_management_be.middleware;
 
+import com.example.library_management_be.repository.BlacklistTokenRepository;
 import com.example.library_management_be.service.CustomUserDetailsService;
 import com.example.library_management_be.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
@@ -18,10 +19,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
     private final CustomUserDetailsService customUserDetailsService;
+    private final BlacklistTokenRepository blacklistTokenRepository;
 
-    public JwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService customUserDetailsService) {
+    public JwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService customUserDetailsService, BlacklistTokenRepository blacklistTokenRepository) {
         this.jwtUtils = jwtUtils;
         this.customUserDetailsService = customUserDetailsService;
+        this.blacklistTokenRepository = blacklistTokenRepository;
     }
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -35,12 +38,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authHeader = request.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\":\"error\",\"message\":\"Missing or invalid Authorization header\"}");
                 return;
             }
 
             String jwtToken = authHeader.substring(7); // Remove "Bearer " prefix
-            if(jwtToken!=null && jwtUtils.validateAccessToken(jwtToken)){
+            // Kiểm tra xem token có nằm trong blacklist không
+            if (blacklistTokenRepository.existsByToken(jwtToken)) {
+                System.out.println("Token is blacklisted: " + jwtToken);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\":\"error\",\"message\":\"Token is blacklisted\"}");
+                return;
+            }
+            if(jwtUtils.validateAccessToken(jwtToken)){
                 String username = jwtUtils.getUsernameFromToken(jwtToken);
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authenticationToken =
@@ -51,10 +64,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Set the authentication in the context
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\":\"error\",\"message\":\"Invalid JWT token\"}");
+                return;
             }
 
+
         }catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":\"error\",\"message\":\"Unauthorized access\"}");
             return;
         }
         filterChain.doFilter(request, response);
