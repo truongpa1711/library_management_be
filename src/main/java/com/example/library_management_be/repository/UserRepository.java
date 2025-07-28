@@ -2,6 +2,9 @@ package com.example.library_management_be.repository;
 
 import com.example.library_management_be.entity.User;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Transactional
     @Query(value = "DELETE FROM user WHERE is_verified = false AND created_at < :cutoffTime", nativeQuery = true)
     void deleteUnverifiedUsersBefore(@Param("cutoffTime") Instant cutoffTime);
+
+    Page<User> findAll(Specification<User> spec, Pageable pageable);
 }

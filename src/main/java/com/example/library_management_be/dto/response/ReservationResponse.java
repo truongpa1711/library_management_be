@@ -12,6 +12,7 @@ public class ReservationResponse {
     private String id;
     private String bookId;
     private String bookTitle;
+    private String bookAuthor;
     private String userId;
     private String userEmail;
     private LocalDate reservationDate;

@@ -57,7 +57,7 @@ public class AuthService {
         return BaseResponse.<LoginResponse>builder()
                 .status("success")
                 .message("Login successful")
-                .data(new LoginResponse(accessToken, refreshToken))
+                .data(new LoginResponse(accessToken, refreshToken, user.getRole().name()))
                 .build();
     }
 

@@ -105,10 +105,6 @@ public class FeedbackService {
             throw new BaseException.CustomBadRequestException("Feedback đã bị từ chối");
         }
 
-        if (feedback.getReply() != null || feedback.getStatus() == EFeedbackStatus.APPROVED) {
-            throw new BaseException.CustomBadRequestException("Feedback đã được xử lý");
-        }
-
         feedback.setReply(
                 (replyContent == null || replyContent.trim().isEmpty())
                         ? "Đã duyệt phản hồi"
@@ -117,6 +113,19 @@ public class FeedbackService {
         feedback.setRepliedDate(LocalDateTime.now());
         feedback.setStatus(EFeedbackStatus.APPROVED);
         feedback.setIsEditable(false); // Không cho phép người dùng chỉnh sửa sau khi đã trả lời
+
+        // === Cập nhật rating cho sách ===
+        Book book = feedback.getBook();
+        double averageRating = book.getAverageRating() != null ? book.getAverageRating() : 0.0;
+        Integer totalRatingsObj = book.getTotalRatings();
+        int totalRatings = totalRatingsObj != null ? totalRatingsObj : 0;
+
+        double newAverage = (averageRating * totalRatings + feedback.getRating()) / (totalRatings + 1);
+        book.setAverageRating(newAverage);
+        book.setTotalRatings(totalRatings + 1);
+        bookRepository.save(book);
+
+        // === Lưu lại feedback sau khi xử lý ===
         feedbackRepository.save(feedback);
         FeedbackResponse response = feedbackMapper.toDto(feedback);
 
@@ -127,6 +136,7 @@ public class FeedbackService {
                 .build();
     }
 
+
     @Transactional
     public BaseResponse<FeedbackResponse> updateFeedbackStatus(Long id, FeedbackStatusRequest request) {
         Feedback feedback = feedbackRepository.findById(id)
@@ -136,20 +146,40 @@ public class FeedbackService {
             throw new BaseException.CustomBadRequestException("Feedback đã được xử lý trước đó");
         }
 
+        Book book = feedback.getBook();
+        if (book == null) {
+            throw new BaseException.CustomNotFoundException("Book không tồn tại");
+        }
+
         feedback.setStatus(request.getStatus());
+        feedback.setIsEditable(false); // Không cho phép chỉnh sửa sau xử lý
+
         if (request.getStatus() == EFeedbackStatus.APPROVED) {
             feedback.setRepliedDate(LocalDateTime.now());
+
+            // Cập nhật rating nếu được duyệt
+            double averageRating = book.getAverageRating() != null ? book.getAverageRating() : 0.0;
+            Integer totalRatingsObj = book.getTotalRatings();
+            int totalRatings = totalRatingsObj != null ? totalRatingsObj : 0;
+
+            double newAverage = (averageRating * totalRatings + feedback.getRating()) / (totalRatings + 1);
+            book.setAverageRating(newAverage);
+            book.setTotalRatings(totalRatings + 1);
+
+            bookRepository.save(book);
         }
-        feedback.setIsEditable(false); // Không cho phép người dùng chỉnh sửa sau khi đã xử lý
+
 
         feedbackRepository.save(feedback);
+
         FeedbackResponse response = feedbackMapper.toDto(feedback);
         return BaseResponse.<FeedbackResponse>builder()
                 .status("success")
-                .message("Feedback status updated successfully")
+                .message("Cập nhật trạng thái phản hồi thành công")
                 .data(response)
                 .build();
     }
+
 
     @Transactional
     public BaseResponse<FeedbackResponse> updateFeedback(Long id, FeedbackUpdateRequest request, Authentication auth) {

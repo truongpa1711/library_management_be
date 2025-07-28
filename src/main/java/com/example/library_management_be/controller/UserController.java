@@ -1,12 +1,15 @@
 package com.example.library_management_be.controller;
 
 import com.example.library_management_be.dto.BaseResponse;
+import com.example.library_management_be.dto.request.AdminUpdateUserRequest;
 import com.example.library_management_be.dto.request.ChangePasswordRequest;
 import com.example.library_management_be.dto.request.UserUpdateRequest;
+import com.example.library_management_be.dto.response.AdminUserResponse;
 import com.example.library_management_be.dto.response.UserResponse;
 import com.example.library_management_be.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -41,5 +44,26 @@ public class UserController {
     public ResponseEntity<BaseResponse<String>> logout(Authentication authentication, HttpServletRequest request) {
         return ResponseEntity.ok(userService.logout(request));
     }
+
+
+    @GetMapping("/get-all-users")
+    public ResponseEntity<BaseResponse<Page<AdminUserResponse>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String orderBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email) {
+        return ResponseEntity.ok(userService.getAllUsers(page, size, orderBy, direction, name, email));
+    }
+
+    @PutMapping("/{id}/update")
+    public ResponseEntity<BaseResponse<AdminUserResponse>> updateUser(
+            @PathVariable Long id,
+            @RequestBody @Valid AdminUpdateUserRequest adminUpdateUserRequest) {
+        return ResponseEntity.ok(userService.updateUserByAdmin(id, adminUpdateUserRequest));
+    }
+
+
 
 }

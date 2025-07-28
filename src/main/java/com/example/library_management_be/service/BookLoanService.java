@@ -73,6 +73,7 @@ public class BookLoanService {
 
             if (book.getAvailableQuantity() > 0) {
                 book.setAvailableQuantity(book.getAvailableQuantity() - 1);
+                book.setBorrowCount(book.getBorrowCount() + 1);
                 bookRepository.save(book);
 
                 BookLoan bookLoan = new BookLoan();

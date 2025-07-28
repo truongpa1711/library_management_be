@@ -54,7 +54,7 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.filterReservations(filter, page, size));
     }
 
-    @PostMapping("/admin/update-status/{id}")
+    @PutMapping("/admin/update-status/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<ReservationResponse>> updateReservationStatus(
             @PathVariable Long id,

@@ -10,4 +10,5 @@ import lombok.*;
 public class LoginResponse {
     private String accessToken; // JWT token for authentication
     private String refreshToken; // Token to refresh the access token
+    private String role; // Role of the user (e.g., ADMIN, USER)
 }

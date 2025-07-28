@@ -1,8 +1,10 @@
 package com.example.library_management_be.service;
 
 import com.example.library_management_be.dto.BaseResponse;
+import com.example.library_management_be.dto.request.AdminUpdateUserRequest;
 import com.example.library_management_be.dto.request.ChangePasswordRequest;
 import com.example.library_management_be.dto.request.UserUpdateRequest;
+import com.example.library_management_be.dto.response.AdminUserResponse;
 import com.example.library_management_be.dto.response.UserResponse;
 import com.example.library_management_be.entity.User;
 import com.example.library_management_be.exception.UserException;
@@ -10,11 +12,21 @@ import com.example.library_management_be.mapper.UserMapper;
 import com.example.library_management_be.repository.BlacklistTokenRepository;
 import com.example.library_management_be.repository.UserRepository;
 import com.example.library_management_be.utils.JwtUtils;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.library_management_be.entity.BlacklistToken;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -114,6 +126,48 @@ public class UserService {
                 .data("User logged out successfully")
                 .build();
     }
+
+    public BaseResponse<Page<AdminUserResponse>> getAllUsers(int page, int size, String orderBy, String direction, String name, String email) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction), orderBy));
+
+        Specification<User> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (name != null && !name.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("fullName")), "%" + name.toLowerCase() + "%"));
+            }
+            if (email != null && !email.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<User> userPage = userRepository.findAll(spec, pageable);
+        Page<AdminUserResponse> userResponses = userPage.map(userMapper::toAdminUserResponse);
+
+        return new BaseResponse<>("success", "Lấy danh sách người dùng thành công", userResponses);
+    }
+
+    public BaseResponse<AdminUserResponse> updateUserByAdmin(Long id, AdminUpdateUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserException.UserNotFoundException("Không tìm thấy người dùng với ID: " + id));
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setDateOfBirth(request.getDateOfBirth());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setAddress(request.getAddress());
+        user.setRole(request.getRole());
+        user.setActive(request.getIsActive());
+        user.set_verified(request.getIsVerified());
+
+        userRepository.save(user);
+
+        AdminUserResponse response = userMapper.toAdminUserResponse(user);
+        return new BaseResponse<>("success", "Cập nhật người dùng thành công", response);
+    }
+
+
+
 
     private String extractTokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
