@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -25,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void deleteUnverifiedUsersBefore(@Param("cutoffTime") Instant cutoffTime);
 
     Page<User> findAll(Specification<User> spec, Pageable pageable);
+
+
 }

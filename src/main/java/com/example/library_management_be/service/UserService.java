@@ -127,7 +127,7 @@ public class UserService {
                 .build();
     }
 
-    public BaseResponse<Page<AdminUserResponse>> getAllUsers(int page, int size, String orderBy, String direction, String name, String email) {
+    public BaseResponse<Page<AdminUserResponse>> getAllUsers(int page, int size, String orderBy, String direction, String name, String email, String role) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction), orderBy));
 
         Specification<User> spec = (root, query, cb) -> {
@@ -137,6 +137,9 @@ public class UserService {
             }
             if (email != null && !email.isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            }
+            if (role != null && !role.isEmpty()) {
+                predicates.add(cb.equal(root.get("role"), role));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -166,6 +169,22 @@ public class UserService {
         return new BaseResponse<>("success", "Cập nhật người dùng thành công", response);
     }
 
+    public BaseResponse<Page<AdminUserResponse>> searchUserByEmail(String email) {
+        System.out.println("Searching for users with email: " + email);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "email")); // Default pagination
+
+        Specification<User> spec = (root, query, cb) ->
+                cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%");
+
+        Page<User> userPage = userRepository.findAll(spec, pageable);
+        Page<AdminUserResponse> userResponses = userPage.map(userMapper::toAdminUserResponse);
+
+        return BaseResponse.<Page<AdminUserResponse>>builder()
+                .status("success")
+                .message("Search completed successfully")
+                .data(userResponses)
+                .build();
+    }
 
 
 

@@ -26,9 +26,11 @@ import java.util.List;
 public class BookLoanController {
     private final BookLoanService bookLoanService;
 
-    @PostMapping
-    public ResponseEntity<BaseResponse<?>> borrowBook(Authentication authentication, @Valid @RequestBody BookLoanRequest request) {
-        return ResponseEntity.ok(bookLoanService.borrowBook(authentication, request));
+    @PostMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<?>> borrowBook(@Valid @RequestBody BookLoanRequest request,
+                                                      @PathVariable Long userId) {
+        return ResponseEntity.ok(bookLoanService.borrowBook(request, userId));
     }
 
     @PutMapping("/{id}/return")

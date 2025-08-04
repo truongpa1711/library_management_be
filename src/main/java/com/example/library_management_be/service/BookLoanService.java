@@ -57,9 +57,8 @@ public class BookLoanService {
 
     // Add methods to handle book loan operations, such as borrowing and returning books
     @Transactional
-    public BaseResponse<?> borrowBook(Authentication authentication, BookLoanRequest request) {
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
+    public BaseResponse<?> borrowBook(BookLoanRequest request, Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException.UserNotFoundException("User not found"));
 
         LocalDate borrowDate = LocalDate.now();

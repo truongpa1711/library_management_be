@@ -142,7 +142,7 @@ public class BookService {
     @Transactional
     public Page<BookResponse> getAllBooks(String title, String author, String genre, String status,
                                           int page, int size, String orderBy, String direction) {
-        Sort.Direction sortDirection = Sort.Direction.fromOptionalString(direction).orElse(Sort.Direction.ASC);
+        Sort.Direction sortDirection = Sort.Direction.fromOptionalString(direction).orElse(Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, orderBy));
 
         Specification<Book> spec = null;
@@ -225,7 +225,7 @@ public class BookService {
         List<SimpleCount> topGenres = bookRepository.findTopGenres(top5)
                 .stream().map(o -> new SimpleCount((String)o[0], (Long)o[1])).toList();
 
-        List<BookResponse> mostBorrowed = bookRepository.findTop10ByOrderByBorrowCountDesc()
+        List<BookResponse> mostBorrowed = bookRepository.findTop5ByOrderByBorrowCountDesc()
                 .stream().map(bookMapper::toDto).toList();
 
         return BookStatisticsResponse.builder()

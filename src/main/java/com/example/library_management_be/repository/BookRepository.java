@@ -16,7 +16,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     Page<Book> findAll(Specification<Book> spec, Pageable pageable);
 
-    List<Book> findTop10ByOrderByBorrowCountDesc();
+    List<Book> findTop5ByOrderByBorrowCountDesc();
 
     // Cho phép giới hạn linh hoạt:
     @Query("SELECT b FROM Book b ORDER BY b.borrowCount DESC")

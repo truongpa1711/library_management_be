@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,15 +54,22 @@ public class UserController {
             @RequestParam(defaultValue = "id") String orderBy,
             @RequestParam(defaultValue = "asc") String direction,
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String email) {
-        return ResponseEntity.ok(userService.getAllUsers(page, size, orderBy, direction, name, email));
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String role) {
+        return ResponseEntity.ok(userService.getAllUsers(page, size, orderBy, direction, name, email, role));
     }
 
     @PutMapping("/{id}/update")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<AdminUserResponse>> updateUser(
             @PathVariable Long id,
             @RequestBody @Valid AdminUpdateUserRequest adminUpdateUserRequest) {
         return ResponseEntity.ok(userService.updateUserByAdmin(id, adminUpdateUserRequest));
+    }
+
+    @GetMapping("/searchByEmail")
+    public ResponseEntity<BaseResponse<Page<AdminUserResponse>>> searchUserByEmail(@RequestParam String email) {
+        return ResponseEntity.ok(userService.searchUserByEmail(email));
     }
 
 

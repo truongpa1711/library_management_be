@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 
 @RestController
@@ -31,6 +28,15 @@ public class BookController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<BookResponse>> createBook(@Valid @RequestBody BookRequest bookRequest) {
+        // Validate the book request
+        if(bookRequest.getAvailableQuantity()> bookRequest.getTotalQuantity()) {
+            return ResponseEntity.badRequest().body(
+                BaseResponse.<BookResponse>builder()
+                    .status("error")
+                    .message("Số lượng có sẵn không thể lớn hơn tổng số lượng")
+                    .build()
+            );
+        }
         return ResponseEntity.ok(bookService.createBook(bookRequest));
     }
 
@@ -39,6 +45,15 @@ public class BookController {
     public ResponseEntity<BaseResponse<BookResponse>> updateBook(
             @PathVariable Long id,
             @Valid @RequestBody BookRequest bookRequest) {
+        // Validate the book request
+        if(bookRequest.getAvailableQuantity() > bookRequest.getTotalQuantity()) {
+            return ResponseEntity.badRequest().body(
+                BaseResponse.<BookResponse>builder()
+                    .status("error")
+                    .message("Số lượng có sẵn không thể lớn hơn tổng số lượng")
+                    .build()
+            );
+        }
         return ResponseEntity.ok(bookService.updateBook(id, bookRequest));
     }
 
@@ -61,8 +76,8 @@ public class BookController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String orderBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "createdAt") String orderBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
         Page<BookResponse> books = bookService.getAllBooks(title, author, genre, status, page, size, orderBy, direction);
         return ResponseEntity.ok(
             BaseResponse.<Page<BookResponse>>builder()
