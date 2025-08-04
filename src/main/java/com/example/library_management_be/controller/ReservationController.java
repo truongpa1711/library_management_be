@@ -64,9 +64,7 @@ public class ReservationController {
         return ResponseEntity.ok(response);
     }
 
-    //Huỷ đặt trước (do người dùng)
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<BaseResponse<String>> cancelReservation(
             @PathVariable Long id,
             Authentication authentication) {

@@ -244,6 +244,17 @@ public class FeedbackService {
         return new BaseResponse<>("success", "Danh sách feedback đã lọc", responsePage);
     }
 
+    public void deleteFeedbackByAdmin(Long id) {
+        Feedback feedback = feedbackRepository.findById(id)
+                .orElseThrow(() -> new BaseException.CustomNotFoundException("Feedback không tồn tại"));
+
+        // Chỉ cho phép xóa feedback có trạng thái PENDING hoặc REJECTED
+        if (feedback.getStatus() != EFeedbackStatus.PENDING && feedback.getStatus() != EFeedbackStatus.REJECTED) {
+            throw new BaseException.CustomBadRequestException("Chỉ có thể xóa feedback đang chờ xử lý hoặc đã bị từ chối");
+        }
+
+        feedbackRepository.delete(feedback);
+    }
 
 
 }

@@ -73,6 +73,14 @@ public class FeedbackController {
         return ResponseEntity.ok(new BaseResponse<>("success", "Xóa feedback thành công", null));
     }
 
+    //Admin xóa feedback của người dùng
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BaseResponse<Void>> deleteFeedbackByAdmin(@PathVariable Long id) {
+        feedbackService.deleteFeedbackByAdmin(id);
+        return ResponseEntity.ok(new BaseResponse<>("success", "Xóa feedback thành công", null));
+    }
+
     // 6. Admin xem tất cả feedback
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
