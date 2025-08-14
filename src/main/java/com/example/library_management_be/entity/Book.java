@@ -55,7 +55,7 @@ public class Book extends BaseEntity{
     private int totalRatings; // Optional field for total number of ratings
     private String imageUrl;
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
     List<BookLoan> bookLoans;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -66,10 +66,10 @@ public class Book extends BaseEntity{
     )
     private List<Category> categories; // Danh sách danh mục mà sách này thuộc về
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
     private List<Reservation> reservations; // Danh sách đặt sách của người dùng
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
     private List<Feedback> feedbacks; // Danh sách phản hồi của người dùng về sách này
 
 }

@@ -85,7 +85,7 @@ public class FeedbackService {
 
     public BaseResponse<Page<FeedbackResponse>> getFeedbacksByBookId(Long bookId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<Feedback> feedbackPage = feedbackRepository.findByBookId(bookId, pageable);
+        Page<Feedback> feedbackPage = feedbackRepository.findByBookIdAndStatus(bookId, EFeedbackStatus.APPROVED, pageable);
 
         Page<FeedbackResponse> responsePage = feedbackPage.map(feedbackMapper::toDto);
 
@@ -96,6 +96,7 @@ public class FeedbackService {
                 .build();
     }
 
+
     @Transactional
     public BaseResponse<FeedbackResponse> replyFeedback(Long id, String replyContent) {
         Feedback feedback = feedbackRepository.findById(id)
@@ -105,6 +106,8 @@ public class FeedbackService {
             throw new BaseException.CustomBadRequestException("Feedback đã bị từ chối");
         }
 
+        boolean isFirstApproval = feedback.getStatus() != EFeedbackStatus.APPROVED;
+
         feedback.setReply(
                 (replyContent == null || replyContent.trim().isEmpty())
                         ? "Đã duyệt phản hồi"
@@ -112,20 +115,20 @@ public class FeedbackService {
         );
         feedback.setRepliedDate(LocalDateTime.now());
         feedback.setStatus(EFeedbackStatus.APPROVED);
-        feedback.setIsEditable(false); // Không cho phép người dùng chỉnh sửa sau khi đã trả lời
+        feedback.setIsEditable(false); // Không cho phép chỉnh sửa sau khi trả lời
 
-        // === Cập nhật rating cho sách ===
-        Book book = feedback.getBook();
-        double averageRating = book.getAverageRating() != null ? book.getAverageRating() : 0.0;
-        Integer totalRatingsObj = book.getTotalRatings();
-        int totalRatings = totalRatingsObj != null ? totalRatingsObj : 0;
+        // === Cập nhật rating cho sách nếu feedback được duyệt lần đầu ===
+        if (isFirstApproval) {
+            Book book = feedback.getBook();
+            double averageRating = book.getAverageRating() != null ? book.getAverageRating() : 0.0;
+            int totalRatings =  book.getTotalRatings();
 
-        double newAverage = (averageRating * totalRatings + feedback.getRating()) / (totalRatings + 1);
-        book.setAverageRating(newAverage);
-        book.setTotalRatings(totalRatings + 1);
-        bookRepository.save(book);
+            double newAverage = (averageRating * totalRatings + feedback.getRating()) / (totalRatings + 1);
+            book.setAverageRating(newAverage);
+            book.setTotalRatings(totalRatings + 1);
+            bookRepository.save(book);
+        }
 
-        // === Lưu lại feedback sau khi xử lý ===
         feedbackRepository.save(feedback);
         FeedbackResponse response = feedbackMapper.toDto(feedback);
 
@@ -135,6 +138,7 @@ public class FeedbackService {
                 .data(response)
                 .build();
     }
+
 
 
     @Transactional

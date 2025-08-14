@@ -30,4 +30,5 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long>, JpaSp
                                  @Param("userEmail") String userEmail,
                                  Pageable pageable);
 
+    Page<Feedback> findByBookIdAndStatus(Long bookId, EFeedbackStatus eFeedbackStatus, Pageable pageable);
 }
